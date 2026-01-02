@@ -1,34 +1,63 @@
-# Lens Desktop Core ("OpenLens")
+<!-- TEXT_SECTION:header:START -->
+<div>
+    <!-- glow seems to be not supported by GH
+    <div style="background-image:radial-gradient(ellipse 100% 60%, rgba(61,144,206,0.8) 0%, transparent 40%)"></div>
+    -->
+    <p align="center">
+    <a href="https://k8slens.dev" target="_blank" rel="noopener noreferrer">
+      <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="assets/lens-mirantis-logo.svg">
+        <source media="(prefers-color-scheme: light)" srcset="assets/lens-mirantis-logo-black.svg">
+        <img width="300px" alt="Lens Logo" src="assets/lens-mirantis-logos.svg">
+      </picture>
+    </a> 
+  </p>
+  <p align="center">
+    <a href="https://k8slens.dev" target="_blank">Lens Website</a>&nbsp;&#8226;&nbsp;
+    <a href="https://store.k8slens.dev/products/lens-desktop-pro?plan=pro-monthly" target="_blank">Pricing</a>&nbsp;&#8226;&nbsp;
+    <a href="https://forums.k8slens.dev" target="_blank">Forums</a>&nbsp;&#8226;&nbsp;
+    <a href="https://docs.k8slens.dev" target="_blank">Docs</a>&nbsp;&#8226;&nbsp;
+    <a href="https://www.mirantis.com/about/" target="_blank">Company</a>&nbsp;&#8226;&nbsp;
+    <a href="https://k8slens.dev/purchase-request.html" target="_blank">Contact</a>&nbsp;&#8226;&nbsp;
+    <a href="https://github.com/lensapp/lens/issues" target="_blank">Issue Tracker</a>&nbsp;&#8226;&nbsp;
+    <a href="https://app.k8slens.dev/" target="_blank">Login</a>&nbsp;&#8226;&nbsp;
+    <a href="https://k8slens.dev/" target="_blank">Download</a>
+  </p>
+  <h3 align="center">
+    The Way The World Runs Kubernetes
+  </h3>
+  <p align="center">
+  Meet the new standard for cloud native software development & operations. <br />
+  With over 1 million users, Lens is the most popular Kubernetes IDE in the world.
+  </p>
+  <img style="margin-top:20px" src="assets/hero-home.png" alt="lens-product-image" />
+</div>
+<!-- TEXT_SECTION:header:END -->
 
-[![Build Status](https://github.com/lensapp/lens/actions/workflows/test.yml/badge.svg)](https://github.com/lensapp/lens/actions/workflows/test.yml)
-<img src="https://upload.wikimedia.org/wikipedia/commons/1/17/Discourse_icon.svg" width=25>[Explore our Forums](https://forums.k8slens.dev)
+## What is Lens?
 
-## The Repository
+Designed for Developers and DevOps Engineers, Lens provides an unparalleled experience for managing and
+troubleshooting Kubernetes workloads through one intuitive context-aware UI. For teams and organizations, Lens
+has proven to be the most effective way to learn Kubernetes, boost team productivity and reduce tools required for
+cloud native development. It's trusted by the world's best product teams; from innovative startups to iconic
+enterprises. Lens is the #1 choice for Kubernetes with over 1 million users globally.
 
-This repository is where Team Lens develops the core of the [Lens Desktop](https://k8slens.dev) product together with the community.
+## Install
 
-The core is a library, powered by [Electron](https://www.electronjs.org/) and [React](https://reactjs.org/). Unlike generic Electron + React frameworks / boilerplates, it is very opinionated for creating Lens Desktop-like applications and has support for Lens Extensions.
+Download and install Lens Desktop from our [website](https://k8slens.dev).
 
-In the future, this library will be streamlined to become more customizable and pluggable with easy to use tooling for Lens Extension developers.
+## Getting Help
 
-This source code is available to everyone under the [MIT license](./LICENSE).
+You can find answers to a huge variety of questions, along with a large community of helpful developers over on the [Lens Forums](https://forums.k8slens.dev) - replies are generally very quick. If you encounter issues or have any feature requests, you can post them in the public [community issues tracker](https://github.com/lensapp/lens/issues).
 
-## Lens Desktop
+Lens Pro and Lens Enterprise customers also have access to 24/5 commercial support.
 
-[Lens Desktop](https://k8slens.dev) is built on top of the Lens Desktop Core with Team Lens built extensions released under a traditional [Terms Of Service](https://k8slens.dev/licenses/tos).
+To stay up to date with all the latest news and product updates, make sure you subscribe to our blog — or you can always follow us on Twitter.
 
-Lens Desktop is a standalone application for MacOS, Windows and Linux operating systems. Get started by downloading it from [Lens website](https://k8slens.dev).
+## History of this Repository
 
-[![Screenshot](.github/screenshot.png)](https://www.youtube.com/watch?v=eeDwdVXattc)
+Previously, this repository contained the source code for the open source version of Lens Desktop product. The open source version of Lens Desktop has been retired and is no longer maintained. The Lens Desktop product by Mirantis is still actively developed and supported by Mirantis, but contributions are now made through extensions using the Lens extension API, rather than directly to the core product. The legacy source code for the open source version is still available in the repository's 'master'-branch.
 
-## Development
+## Copyright & License
 
-See [Development](https://docs.k8slens.dev/contributing/development/) page.
-
-## Contributing
-
-See [Contributing](https://docs.k8slens.dev/contributing/contribute-to-lens/) page.
-
-## License
-
-See [License](LICENSE).
+Copyright (c) 2024 Mirantis, Inc. - The content of this repository is released under the MIT license. Lens and the Lens Logo are trademarks of Mirantis, Inc.
