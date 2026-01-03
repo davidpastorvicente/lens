@@ -11,6 +11,7 @@ import type { LocationDescriptor } from "history";
 import { cssNames } from "@k8slens/utilities";
 import { withTooltip } from "@k8slens/tooltip";
 import isNumber from "lodash/isNumber";
+import ArgoCD from "./argocd.svg";
 import Configuration from "./configuration.svg";
 import Crane from "./crane.svg";
 import Group from "./group.svg";
@@ -49,6 +50,7 @@ const hrefIsSafe = (href: string) => Boolean(href.match(hrefValidation));
  * `<Icon>` cannot pass in a `../some/path`.
  */
 const localSvgIcons = new Map([
+  ["argoCD", ArgoCD],
   ["configuration", Configuration],
   ["crane", Crane],
   ["group", Group],
@@ -74,6 +76,7 @@ const localSvgIcons = new Map([
 ]);
 
 export type NamedSvg =
+  | "argoCD"
   | "configuration"
   | "crane"
   | "group"
@@ -91,6 +94,7 @@ export type NamedSvg =
   | "ssh"
   | "storage"
   | "terminal"
+  | "notice"
   | "user"
   | "users"
   | "wheel"
