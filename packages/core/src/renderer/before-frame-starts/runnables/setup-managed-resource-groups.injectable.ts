@@ -130,6 +130,7 @@ const setupManagedResourceGroupsInjectable = getInjectable({
             // 5. Create Route Component injectable
             const routeComponentInjectable = createManagedResourceRouteComponentInjectable(
               group.id,
+              group.displayName,
               resource,
               routeInjectable,
               storeInjectable,

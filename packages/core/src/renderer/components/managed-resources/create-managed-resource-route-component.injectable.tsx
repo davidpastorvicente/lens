@@ -10,12 +10,14 @@ import { routeSpecificComponentInjectionToken } from "../../routes/route-specifi
 import type { Route } from "../../../common/front-end-routing/front-end-route-injection-token";
 import type { CustomResourceStore } from "../../../common/k8s-api/api-manager/resource.store";
 import type { KubeObject } from "@k8slens/kube-object";
+import { SiblingsInTabLayout } from "../layout/siblings-in-tab-layout";
 
 /**
  * Factory function to create a route component injectable for a managed resource
  */
 export const createManagedResourceRouteComponentInjectable = (
   groupId: string,
+  groupDisplayName: string,
   resource: EnrichedResourceConfig,
   routeInjectable: any,
   storeInjectable: any,
@@ -30,11 +32,13 @@ export const createManagedResourceRouteComponentInjectable = (
         const store = di.inject(storeInjectable) as CustomResourceStore<KubeObject>;
 
         return (
-          <ManagedResourceList
-            store={store}
-            resourceName={resource.pluralName}
-            displayName={resource.displayName || resource.kind}
-          />
+          <SiblingsInTabLayout>
+            <ManagedResourceList
+              store={store}
+              resourceName={resource.pluralName}
+              displayName={`${groupDisplayName} ${resource.displayName || resource.kind}`}
+            />
+          </SiblingsInTabLayout>
         );
       },
     }),
