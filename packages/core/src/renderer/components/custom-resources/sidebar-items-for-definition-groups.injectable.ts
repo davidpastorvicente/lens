@@ -12,6 +12,7 @@ import type { SidebarItemRegistration } from "../layout/sidebar-items.injectable
 import routeIsActiveInjectable from "../../routes/route-is-active.injectable";
 import navigateToCustomResourcesInjectable from "../../../common/front-end-routing/routes/cluster/custom-resources/custom-resources/navigate-to-custom-resources.injectable";
 import routePathParametersInjectable from "../../routes/route-path-parameters.injectable";
+import managedResourceGroupsInjectable from "../../../common/managed-resources/managed-resource-groups.injectable";
 
 const sidebarItemsForDefinitionGroupsInjectable = getInjectable({
   id: "sidebar-items-for-definition-groups",
@@ -20,6 +21,7 @@ const sidebarItemsForDefinitionGroupsInjectable = getInjectable({
     const customResourceDefinitions = di.inject(
       customResourceDefinitionsInjectable,
     );
+    const managedResourceGroups = di.inject(managedResourceGroupsInjectable);
 
     const crdRoute = di.inject(customResourcesRouteInjectable);
     const crdRouteIsActive = di.inject(routeIsActiveInjectable, crdRoute);
@@ -30,8 +32,22 @@ const sidebarItemsForDefinitionGroupsInjectable = getInjectable({
     return computed((): SidebarItemRegistration[] => {
       const definitions = customResourceDefinitions.get();
 
+      // Build a set of managed resource identifiers (group + kind)
+      const managedResources = new Set<string>();
+
+      managedResourceGroups.forEach(group => {
+        group.resources.forEach(resource => {
+          managedResources.add(`${group.apiGroup}/${resource.kind}`);
+        });
+      });
+
+      // Filter out CRDs that are managed by our dynamic system
+      const unmanagedDefinitions = definitions.filter(crd => 
+        !managedResources.has(`${crd.getGroup()}/${crd.getResourceKind()}`),
+      );
+
       const groupedCrds = toPairs(
-        groupBy((crd) => crd.getGroup(), definitions),
+        groupBy((crd) => crd.getGroup(), unmanagedDefinitions),
       );
 
       return groupedCrds.flatMap(([group, definitions]) => {
