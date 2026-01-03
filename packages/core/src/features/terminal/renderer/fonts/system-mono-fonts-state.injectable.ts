@@ -44,42 +44,16 @@ const systemMonoFontsStateInjectable = getInjectable({
         console.log("Local Font Access API not available or permission denied:", error);
       }
 
-      // Fallback: Check common monospace fonts
+      // Fallback: Check common monospace fonts (only the original bundled fonts)
       const commonMonoFonts = [
-        "Cascadia Code",
-        "Cascadia Mono",
-        "Comic Sans Mono",
-        "Consolas",
-        "Courier",
-        "Courier New",
-        "DejaVu Sans Mono",
-        "Droid Sans Mono",
-        "Fantasque Sans Mono",
-        "Fira Code",
-        "Fira Mono",
-        "Hack",
-        "Hasklig",
-        "Hermit",
-        "Inconsolata",
-        "Input Mono",
-        "Iosevka",
+        "Anonymous Pro",
+        "IBM Plex Mono",
         "JetBrains Mono",
-        "Liberation Mono",
-        "Menlo",
-        "Meslo",
-        "Monaco",
-        "Monofur",
-        "Monoid",
-        "Mononoki",
-        "Noto Mono",
-        "Overpass Mono",
-        "Oxygen Mono",
-        "PT Mono",
+        "Red Hat Mono",
         "Roboto Mono",
-        "SF Mono",
         "Source Code Pro",
+        "Space Mono",
         "Ubuntu Mono",
-        "Victor Mono",
       ];
 
       // Check which common fonts are available
