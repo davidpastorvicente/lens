@@ -5,29 +5,30 @@
 import React from "react";
 import { SubTitle } from "../../../../../../renderer/components/layout/sub-title";
 import { withInjectables } from "@ogre-tools/injectable-react";
-import { Input } from "../../../../../../renderer/components/input";
 import { observer } from "mobx-react";
-import type { UserPreferencesState } from "../../../../../user-preferences/common/state.injectable";
-import userPreferencesStateInjectable from "../../../../../user-preferences/common/state.injectable";
+import { Select } from "../../../../../../renderer/components/select";
+import type { EditorFontPreferencePresenter } from "./editor-font-options.injectable";
+import editorFontPreferencePresenterInjectable from "./editor-font-options.injectable";
 
 interface Dependencies {
-  state: UserPreferencesState;
+  model: EditorFontPreferencePresenter;
 }
 
-const NonInjectedEditorFontFamily = observer(({ state: { editorConfiguration }}: Dependencies) => (
+const NonInjectedEditorFontFamily = observer(({ model }: Dependencies) => (
   <section>
     <SubTitle title="Font family" />
-    <Input
-      theme="round-black"
-      type="text"
-      value={editorConfiguration.fontFamily}
-      onChange={value => editorConfiguration.fontFamily = value}
+    <Select
+      themeName="lens"
+      controlShouldRenderValue
+      value={model.current.get()}
+      options={model.options.get()}
+      onChange={model.onSelection}
     />
   </section>
 ));
 
 export const EditorFontFamily = withInjectables<Dependencies>(NonInjectedEditorFontFamily, {
   getProps: (di) => ({
-    state: di.inject(userPreferencesStateInjectable),
+    model: di.inject(editorFontPreferencePresenterInjectable),
   }),
 });

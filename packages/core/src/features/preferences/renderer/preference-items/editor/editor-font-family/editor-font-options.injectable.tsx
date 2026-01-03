@@ -7,21 +7,20 @@ import type { IComputedValue } from "mobx";
 import { action, computed } from "mobx";
 import React from "react";
 import type { SingleValue } from "react-select";
-import { defaultTerminalFontFamily } from "../../../../../../common/vars";
 import type { SelectOption } from "../../../../../../renderer/components/select";
 import { terminalFontInjectionToken } from "../../../../../terminal/renderer/fonts/token";
 import userPreferencesStateInjectable from "../../../../../user-preferences/common/state.injectable";
 import systemMonoFontsInjectable from "../../../../../terminal/renderer/fonts/system-mono-fonts.injectable";
 
-export interface TerminalFontPreferencePresenter {
+export interface EditorFontPreferencePresenter {
   readonly options: IComputedValue<SelectOption<string>[]>;
   readonly current: IComputedValue<string>;
   onSelection: (selection: SingleValue<SelectOption<string>>) => void;
 }
 
-const terminalFontPreferencePresenterInjectable = getInjectable({
-  id: "terminal-font-preference-presenter",
-  instantiate: (di): TerminalFontPreferencePresenter => {
+const editorFontPreferencePresenterInjectable = getInjectable({
+  id: "editor-font-preference-presenter",
+  instantiate: (di): EditorFontPreferencePresenter => {
     const state = di.inject(userPreferencesStateInjectable);
     const terminalFonts = di.injectMany(terminalFontInjectionToken);
     const systemMonoFonts = di.inject(systemMonoFontsInjectable);
@@ -34,14 +33,14 @@ const terminalFontPreferencePresenterInjectable = getInjectable({
             <span
               style={{
                 fontFamily: `${font.name}, var(--font-terminal)`,
-                fontSize: state.terminalConfig.fontSize,
+                fontSize: state.editorConfiguration.fontSize,
               }}
             >
               {font.name}
             </span>
           ),
           value: font.name,
-          isSelected: state.terminalConfig.fontFamily === font.name,
+          isSelected: state.editorConfiguration.fontFamily === font.name,
         }));
 
         const systemFonts = systemMonoFonts.get().map(font => ({
@@ -49,14 +48,14 @@ const terminalFontPreferencePresenterInjectable = getInjectable({
             <span
               style={{
                 fontFamily: `"${font.name}", var(--font-terminal)`,
-                fontSize: state.terminalConfig.fontSize,
+                fontSize: state.editorConfiguration.fontSize,
               }}
             >
               {font.name}
             </span>
           ),
           value: font.name,
-          isSelected: state.terminalConfig.fontFamily === font.name,
+          isSelected: state.editorConfiguration.fontFamily === font.name,
         }));
 
         // Combine and remove duplicates (prefer bundled version)
@@ -68,12 +67,12 @@ const terminalFontPreferencePresenterInjectable = getInjectable({
 
         return allFonts.sort((a, b) => a.value.localeCompare(b.value));
       }),
-      current: computed(() => state.terminalConfig.fontFamily),
+      current: computed(() => state.editorConfiguration.fontFamily),
       onSelection: action(selection => {
-        state.terminalConfig.fontFamily = selection?.value ?? defaultTerminalFontFamily;
+        state.editorConfiguration.fontFamily = selection?.value ?? "Monaco";
       }),
     };
   },
 });
 
-export default terminalFontPreferencePresenterInjectable;
+export default editorFontPreferencePresenterInjectable;
