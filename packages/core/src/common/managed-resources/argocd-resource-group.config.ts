@@ -21,6 +21,29 @@ export const argoCDResourceGroupConfig: ManagedResourceGroupConfig = {
       apiVersion: "v1alpha1",
       pluralName: "applications",
       namespaced: true,
+      columns: [
+        {
+          id: "destination",
+          title: "Destination",
+          getValue: (item) => {
+            return (item as any).spec?.destination?.namespace || "-";
+          },
+        },
+        {
+          id: "sync-status",
+          title: "Sync",
+          getValue: (item) => {
+            return (item as any).status?.sync?.status || "Unknown";
+          },
+        },
+        {
+          id: "health-status",
+          title: "Health",
+          getValue: (item) => {
+            return (item as any).status?.health?.status || "Unknown";
+          },
+        },
+      ],
     },
     {
       kind: "AppProject",

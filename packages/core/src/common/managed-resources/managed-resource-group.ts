@@ -2,6 +2,17 @@
  * Copyright (c) OpenLens Authors. All rights reserved.
  * Licensed under MIT License. See LICENSE in root directory for more information.
  */
+import type React from "react";
+import type { KubeObject } from "@k8slens/kube-object";
+
+/**
+ * Custom column definition for managed resources
+ */
+export interface ManagedResourceColumn {
+  id: string;                                    // Unique column ID (used for className and sortBy)
+  title: string;                                 // Column header title
+  getValue: (item: KubeObject) => React.ReactNode;  // Function to extract/render cell value
+}
 
 /**
  * Simplified configuration for a managed resource
@@ -15,6 +26,8 @@ export interface ManagedResourceConfig {
   group?: string;
   pluralName?: string;
   namespaced?: boolean;
+  // Optional: custom columns (beyond default: Name, Namespace, Age)
+  columns?: ManagedResourceColumn[];
 }
 
 /**
@@ -35,4 +48,5 @@ export interface ManagedResourceGroupConfig {
  */
 export interface EnrichedResourceConfig extends Required<ManagedResourceConfig> {
   displayName: string;
+  columns: ManagedResourceColumn[];
 }

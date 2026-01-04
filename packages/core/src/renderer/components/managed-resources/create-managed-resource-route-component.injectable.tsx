@@ -37,6 +37,7 @@ export const createManagedResourceRouteComponentInjectable = (
               store={store}
               resourceName={resource.pluralName}
               displayName={`${groupDisplayName} ${resource.displayName || resource.kind}`}
+              customColumns={resource.columns}
             />
           </SiblingsInTabLayout>
         );

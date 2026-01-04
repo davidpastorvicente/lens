@@ -39,9 +39,9 @@ const setupManagedResourceGroupsInjectable = getInjectable({
 
       // Generate injectables for all managed resource groups
       const generateInjectables = () => {
-        console.log('[Managed Resources] Generating injectables...');
-        console.log('[Managed Resources] Groups:', managedResourceGroups.map(g => g.id));
-        console.log('[Managed Resources] CRD Store has', crdStore.items.length, 'items');
+        console.log("[Managed Resources] Generating injectables...");
+        console.log("[Managed Resources] Groups:", managedResourceGroups.map(g => g.id));
+        console.log("[Managed Resources] CRD Store has", crdStore.items.length, "items");
         
         const injectables = [];
 
@@ -69,11 +69,12 @@ const setupManagedResourceGroupsInjectable = getInjectable({
                 group: group.apiGroup,
                 pluralName: resource.pluralName,
                 namespaced: resource.namespaced,
+                columns: resource.columns || [],
               };
             } else {
               // Try to find CRD for this resource
               const crd = crdStore.items.find(
-                crd => crd.getResourceKind() === resource.kind && crd.getGroup() === group.apiGroup
+                crd => crd.getResourceKind() === resource.kind && crd.getGroup() === group.apiGroup,
               );
 
               if (!crd) {
@@ -93,6 +94,7 @@ const setupManagedResourceGroupsInjectable = getInjectable({
                 group: crd.getGroup(),
                 pluralName: crd.getPluralName(),
                 namespaced: crd.isNamespaced(),
+                columns: resource.columns || [],
               };
             }
 
@@ -103,6 +105,7 @@ const setupManagedResourceGroupsInjectable = getInjectable({
           for (const resource of enrichedResources) {
             // 1. Create API injectable
             const apiInjectable = createManagedResourceApiInjectable(group.id, resource);
+
             injectables.push(apiInjectable);
 
             // 2. Create Store injectable
@@ -111,10 +114,12 @@ const setupManagedResourceGroupsInjectable = getInjectable({
               resource,
               apiInjectable,
             );
+
             injectables.push(storeInjectable);
 
             // 3. Create Route injectable
             const routeInjectable = createManagedResourceRouteInjectable(group.id, resource);
+
             injectables.push(routeInjectable);
             routeInjectables.push(routeInjectable);
 
@@ -124,6 +129,7 @@ const setupManagedResourceGroupsInjectable = getInjectable({
               resource,
               routeInjectable,
             );
+
             injectables.push(navigationInjectable);
             navigationInjectables.push(navigationInjectable);
 
@@ -135,6 +141,7 @@ const setupManagedResourceGroupsInjectable = getInjectable({
               routeInjectable,
               storeInjectable,
             );
+
             injectables.push(routeComponentInjectable);
           }
 
@@ -148,6 +155,7 @@ const setupManagedResourceGroupsInjectable = getInjectable({
               routeInjectables,
               routeIsActiveInjectable,
             );
+
             injectables.push(sidebarItemsInjectable);
           } else {
             console.warn(`[Managed Resources] No enriched resources for group ${group.id}, skipping sidebar`);
@@ -162,6 +170,7 @@ const setupManagedResourceGroupsInjectable = getInjectable({
         () => [managedResourceGroups, crdStore.items] as const,
         () => {
           const injectables = generateInjectables();
+
           injectableDifferencingRegistrator(injectables);
         },
         {
