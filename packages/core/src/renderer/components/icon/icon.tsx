@@ -12,6 +12,7 @@ import { cssNames } from "@k8slens/utilities";
 import { withTooltip } from "@k8slens/tooltip";
 import isNumber from "lodash/isNumber";
 import ArgoCD from "./argocd.svg";
+import CertManager from "./cert-manager.svg";
 import Configuration from "./configuration.svg";
 import Crane from "./crane.svg";
 import Group from "./group.svg";
@@ -51,6 +52,7 @@ const hrefIsSafe = (href: string) => Boolean(href.match(hrefValidation));
  */
 const localSvgIcons = new Map([
   ["argoCD", ArgoCD],
+  ["certManager", CertManager],
   ["configuration", Configuration],
   ["crane", Crane],
   ["group", Group],
@@ -77,6 +79,7 @@ const localSvgIcons = new Map([
 
 export type NamedSvg =
   | "argoCD"
+  | "certManager"
   | "configuration"
   | "crane"
   | "group"

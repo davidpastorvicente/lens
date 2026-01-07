@@ -38,7 +38,7 @@ export interface ManagedResourceGroupConfig {
   displayName: string;
   icon: string;
   orderNumber: number;
-  apiGroup: string;  // e.g., "argoproj.io" - used to find CRDs
+  apiGroup: string;
   resources: ManagedResourceConfig[];
 }
 
