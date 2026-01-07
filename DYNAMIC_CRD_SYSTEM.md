@@ -321,7 +321,84 @@ While the dynamic system provides a working UI out-of-the-box, you can customize
 
 ### Custom UI Columns
 
-The default `ManagedResourceList` component shows 3 columns: Name, Namespace, and Age. To add custom columns (like Status, Replicas, etc.), create a custom component.
+The default `ManagedResourceList` component shows 3 columns: Name, Namespace, and Age. You can add custom columns in two ways:
+
+1. **Declaratively** - Add columns directly in your config (recommended for simple cases)
+2. **Custom Component** - Create a fully custom component for complex requirements
+
+#### Option 1: Declarative Columns (Recommended)
+
+Add custom columns directly in your resource configuration. Columns are automatically inserted between Namespace and Age.
+
+**Column Interface:**
+```typescript
+interface ManagedResourceColumn {
+  id: string;        // Unique ID (used for className and sortBy)
+  title: string;     // Column header text
+  getValue: (item: KubeObject) => React.ReactNode;  // Extract cell value
+}
+```
+
+**Example: ArgoCD Applications with Destination, Sync, and Health columns**
+
+```typescript
+// argocd-resource-group.config.ts
+export const argoCDResourceGroupConfig: ManagedResourceGroupConfig = {
+  id: "argocd",
+  displayName: "ArgoCD",
+  icon: "argoCD",
+  orderNumber: 91,
+  apiGroup: "argoproj.io",
+  resources: [
+    {
+      kind: "Application",
+      displayName: "Applications",
+      apiVersion: "v1alpha1",
+      pluralName: "applications",
+      namespaced: true,
+      columns: [
+        {
+          id: "destination",
+          title: "Destination",
+          getValue: (item) => {
+            const spec = (item as any).spec;
+            return spec?.destination?.namespace || "-";
+          },
+        },
+        {
+          id: "sync-status",
+          title: "Sync",
+          getValue: (item) => {
+            const status = (item as any).status;
+            return status?.sync?.status || "Unknown";
+          },
+        },
+        {
+          id: "health-status",
+          title: "Health",
+          getValue: (item) => {
+            const status = (item as any).status;
+            return status?.health?.status || "Unknown";
+          },
+        },
+      ],
+    },
+    // ... other resources
+  ],
+};
+```
+
+**Result:** Table displays columns in order: Name | Namespace | Destination | Sync | Health | Age
+
+**Notes:**
+- `getValue` must return primitive values (string/number) or simple React elements
+- All columns are automatically sortable using the `id` field
+- CSS class is automatically set to the column `id`
+- Columns are reactive and update with the resource data
+
+#### Option 2: Custom Component (For Complex UI)
+
+For complex requirements (icons, badges, custom styling), create a custom component.
 
 #### Example: ArgoCD Applications with Sync Status
 
@@ -1074,11 +1151,23 @@ Examples:
 
 ### Custom UI Columns
 
-The default UI shows Name, Namespace, and Age columns. To customize:
+To add custom columns, define them in your resource config using the `columns` array. See the detailed example in the [Customization](#customization) section above.
 
-1. Create a custom component similar to `ManagedResourceList`
-2. Modify the factory to use your custom component
-3. Or extend `ManagedResourceConfig` to include column definitions
+**Quick example:**
+```typescript
+resources: [
+  {
+    kind: "Application",
+    columns: [
+      {
+        id: "status",
+        title: "Status",
+        getValue: (item) => (item as any).status?.phase || "Unknown",
+      },
+    ],
+  },
+]
+```
 
 ### Custom Resource Methods
 
@@ -1114,30 +1203,54 @@ export const argoCDResourceGroupConfig: ManagedResourceGroupConfig = {
   displayName: "ArgoCD",
   icon: "argoCD",
   orderNumber: 91,
+  apiGroup: "argoproj.io",
   resources: [
     {
       kind: "Application",
-      apiVersion: "argoproj.io/v1alpha1",
-      group: "argoproj.io",
+      displayName: "Applications",
+      apiVersion: "v1alpha1",
       pluralName: "applications",
       namespaced: true,
-      displayName: "Applications",
+      columns: [
+        {
+          id: "destination",
+          title: "Destination",
+          getValue: (item) => {
+            const spec = (item as any).spec;
+            return spec?.destination?.namespace || "-";
+          },
+        },
+        {
+          id: "sync-status",
+          title: "Sync",
+          getValue: (item) => {
+            const status = (item as any).status;
+            return status?.sync?.status || "Unknown";
+          },
+        },
+        {
+          id: "health-status",
+          title: "Health",
+          getValue: (item) => {
+            const status = (item as any).status;
+            return status?.health?.status || "Unknown";
+          },
+        },
+      ],
     },
     {
       kind: "AppProject",
-      apiVersion: "argoproj.io/v1alpha1",
-      group: "argoproj.io",
+      displayName: "Projects",
+      apiVersion: "v1alpha1",
       pluralName: "appprojects",
       namespaced: true,
-      displayName: "Projects",
     },
     {
       kind: "ApplicationSet",
-      apiVersion: "argoproj.io/v1alpha1",
-      group: "argoproj.io",
+      displayName: "ApplicationSets",
+      apiVersion: "v1alpha1",
       pluralName: "applicationsets",
       namespaced: true,
-      displayName: "ApplicationSets",
     },
   ],
 };
@@ -1197,6 +1310,7 @@ return (
       store={store}
       resourceName={resource.pluralName}
       displayName={displayName}
+      customColumns={resource.columns}
     />
   </SiblingsInTabLayout>
 );
@@ -1206,6 +1320,17 @@ This ensures:
 - Consistent spacing and padding
 - Same navigation behavior
 - Uniform appearance across all resources
+- Custom columns automatically integrated
+
+### Custom Columns
+
+Custom columns defined in your config are passed to `ManagedResourceList` and automatically:
+- Inserted between Namespace and Age columns
+- Made sortable using the column `id`
+- Given CSS class matching the column `id`
+- Rendered with values from `getValue` function
+
+**Column order:** Name | Namespace | [Custom Columns] | Age
 
 ## Troubleshooting
 
