@@ -11,6 +11,7 @@ import type { Route } from "../../../common/front-end-routing/front-end-route-in
 import type { CustomResourceStore } from "../../../common/k8s-api/api-manager/resource.store";
 import type { KubeObject } from "@k8slens/kube-object";
 import { SiblingsInTabLayout } from "../layout/siblings-in-tab-layout";
+import customResourceDefinitionStoreInjectable from "../../components/custom-resources/definition.store.injectable";
 
 /**
  * Factory function to create a route component injectable for a managed resource
@@ -30,6 +31,10 @@ export const createManagedResourceRouteComponentInjectable = (
       route: di.inject(routeInjectable) as Route<unknown>,
       Component: () => {
         const store = di.inject(storeInjectable) as CustomResourceStore<KubeObject>;
+        const crdStore = di.inject(customResourceDefinitionStoreInjectable);
+        
+        // Find the CRD for this resource to get printer columns
+        const crd = crdStore.getByGroup(resource.group, resource.pluralName);
 
         return (
           <SiblingsInTabLayout>
@@ -37,7 +42,8 @@ export const createManagedResourceRouteComponentInjectable = (
               store={store}
               resourceName={resource.pluralName}
               displayName={`${groupDisplayName} ${resource.displayName || resource.kind}`}
-              customColumns={resource.columns}
+              crd={crd}
+              isNamespaced={resource.namespaced}
             />
           </SiblingsInTabLayout>
         );

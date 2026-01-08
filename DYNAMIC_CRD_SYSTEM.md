@@ -21,7 +21,6 @@ This document explains how to use the dynamic CRD (Custom Resource Definition) r
   - [CRD Auto-Detection](#crd-auto-detection)
   - [Reactive Updates](#reactive-updates)
 - [Customization](#customization)
-  - [Custom UI Columns](#custom-ui-columns)
   - [Custom Resource Methods](#custom-resource-methods)
   - [Mixing Dynamic and Custom Resources](#mixing-dynamic-and-custom-resources)
   - [Adding Custom Styles](#adding-custom-styles)
@@ -319,244 +318,26 @@ When changes occur, injectables are automatically regenerated.
 
 While the dynamic system provides a working UI out-of-the-box, you can customize both the display and functionality for specific resources.
 
-### Custom UI Columns
+### Automatic Column Detection
 
-The default `ManagedResourceList` component shows 3 columns: Name, Namespace, and Age. You can add custom columns in two ways:
+**Columns are automatically detected from CRD definitions** - no configuration needed!
 
-1. **Declaratively** - Add columns directly in your config (recommended for simple cases)
-2. **Custom Component** - Create a fully custom component for complex requirements
+The managed resources UI automatically displays the same columns as the "Custom Resources" section. Columns are determined by the CRD's `additionalPrinterColumns` specification.
 
-#### Option 1: Declarative Columns (Recommended)
+**How it works:**
+- The system reads the CRD's `spec.versions[].additionalPrinterColumns` field
+- Columns defined by the CRD maintainer (e.g., ArgoCD, cert-manager) are automatically displayed
+- Column order: Name | Namespace | [CRD Printer Columns] | Age
+- All columns are automatically sortable
 
-Add custom columns directly in your resource configuration. Columns are automatically inserted between Namespace and Age.
+**Example:**
+For ArgoCD Applications, if the CRD defines printer columns for "Sync Status" and "Health", these will automatically appear in the table without any configuration.
 
-**Column Interface:**
-```typescript
-interface ManagedResourceColumn {
-  id: string;        // Unique ID (used for className and sortBy)
-  title: string;     // Column header text
-  getValue: (item: KubeObject) => React.ReactNode;  // Extract cell value
-}
-```
-
-**Example: ArgoCD Applications with Destination, Sync, and Health columns**
-
-```typescript
-// argocd-resource-group.config.ts
-export const argoCDResourceGroupConfig: ManagedResourceGroupConfig = {
-  id: "argocd",
-  displayName: "ArgoCD",
-  icon: "argoCD",
-  orderNumber: 91,
-  apiGroup: "argoproj.io",
-  resources: [
-    {
-      kind: "Application",
-      displayName: "Applications",
-      apiVersion: "v1alpha1",
-      pluralName: "applications",
-      namespaced: true,
-      columns: [
-        {
-          id: "destination",
-          title: "Destination",
-          getValue: (item) => {
-            const spec = (item as any).spec;
-            return spec?.destination?.namespace || "-";
-          },
-        },
-        {
-          id: "sync-status",
-          title: "Sync",
-          getValue: (item) => {
-            const status = (item as any).status;
-            return status?.sync?.status || "Unknown";
-          },
-        },
-        {
-          id: "health-status",
-          title: "Health",
-          getValue: (item) => {
-            const status = (item as any).status;
-            return status?.health?.status || "Unknown";
-          },
-        },
-      ],
-    },
-    // ... other resources
-  ],
-};
-```
-
-**Result:** Table displays columns in order: Name | Namespace | Destination | Sync | Health | Age
-
-**Notes:**
-- `getValue` must return primitive values (string/number) or simple React elements
-- All columns are automatically sortable using the `id` field
-- CSS class is automatically set to the column `id`
-- Columns are reactive and update with the resource data
-
-#### Option 2: Custom Component (For Complex UI)
-
-For complex requirements (icons, badges, custom styling), create a custom component.
-
-#### Example: ArgoCD Applications with Sync Status
-
-**1. Create Custom Component** (`argocd-applications-custom.tsx`):
-
-```typescript
-import React from "react";
-import { observer } from "mobx-react";
-import { KubeObjectListLayout } from "../kube-object-list-layout";
-import { KubeObjectAge } from "../kube-object/age";
-import { KubeObjectStatusIcon } from "../kube-object-status-icon";
-import { NamespaceSelectBadge } from "../namespaces/namespace-select-badge";
-import type { CustomResourceStore } from "../../../common/k8s-api/api-manager/resource.store";
-import type { KubeObject } from "@k8slens/kube-object";
-
-enum columnId {
-  name = "name",
-  namespace = "namespace",
-  syncStatus = "sync-status",
-  healthStatus = "health-status",
-  age = "age",
-}
-
-export interface ArgoCDApplicationsListProps {
-  store: CustomResourceStore<KubeObject>;
-}
-
-export const ArgoCDApplicationsList = observer(({ store }: ArgoCDApplicationsListProps) => {
-  return (
-    <KubeObjectListLayout
-      isConfigurable
-      tableId="argocd-applications"
-      className="ArgoCDApplications"
-      store={store}
-      sortingCallbacks={{
-        [columnId.name]: item => item.getName(),
-        [columnId.namespace]: item => item.getNs(),
-        [columnId.syncStatus]: item => item.status?.sync?.status || "",
-        [columnId.healthStatus]: item => item.status?.health?.status || "",
-        [columnId.age]: item => -item.getCreationTimestamp(),
-      }}
-      searchFilters={[
-        item => item.getSearchFields(),
-        item => item.status?.sync?.status,
-        item => item.status?.health?.status,
-      ]}
-      renderHeaderTitle="Applications"
-      renderTableHeader={[
-        { title: "Name", className: "name", sortBy: columnId.name, id: columnId.name },
-        { title: "Namespace", className: "namespace", sortBy: columnId.namespace, id: columnId.namespace },
-        { title: "Sync Status", className: "sync-status", sortBy: columnId.syncStatus, id: columnId.syncStatus },
-        { title: "Health", className: "health-status", sortBy: columnId.healthStatus, id: columnId.healthStatus },
-        { title: "Age", className: "age", sortBy: columnId.age, id: columnId.age },
-      ]}
-      renderTableContents={item => {
-        const syncStatus = item.status?.sync?.status || "Unknown";
-        const healthStatus = item.status?.health?.status || "Unknown";
-        
-        return [
-          item.getName(),
-          <NamespaceSelectBadge key="namespace" namespace={item.getNs() || ""} />,
-          <span key="sync" className={`sync-status-${syncStatus.toLowerCase()}`}>
-            {syncStatus}
-          </span>,
-          <span key="health" className={`health-status-${healthStatus.toLowerCase()}`}>
-            <KubeObjectStatusIcon
-              key="icon"
-              object={item}
-              status={healthStatus}
-            />
-            {healthStatus}
-          </span>,
-          <KubeObjectAge key="age" object={item} />,
-        ];
-      }}
-    />
-  );
-});
-```
-
-**2. Create Custom Route Component Factory**:
-
-Instead of using the generic `createManagedResourceRouteComponentInjectable`, create a specific one:
-
-```typescript
-// argocd-applications-route-component.injectable.tsx
-import { getInjectable } from "@ogre-tools/injectable";
-import React from "react";
-import { ArgoCDApplicationsList } from "./argocd-applications-custom";
-import { routeSpecificComponentInjectionToken } from "../../routes/route-specific-component-injection-token";
-import argoCDApplicationsRouteInjectable from "../../../common/front-end-routing/routes/cluster/argocd/applications/argocd-applications-route.injectable";
-import argoCDApplicationsStoreInjectable from "./store.injectable";
-
-const argoCDApplicationsRouteComponentInjectable = getInjectable({
-  id: "argocd-applications-route-component",
-  instantiate: (di) => ({
-    route: di.inject(argoCDApplicationsRouteInjectable),
-    Component: () => {
-      const store = di.inject(argoCDApplicationsStoreInjectable);
-      
-      return <ArgoCDApplicationsList store={store} />;
-    },
-  }),
-  injectionToken: routeSpecificComponentInjectionToken,
-});
-
-export default argoCDApplicationsRouteComponentInjectable;
-```
-
-**3. Exclude from Dynamic System**:
-
-When you want manual control for specific resources, filter them out in your config:
-
-```typescript
-export const argoCDResourceGroupConfig: ManagedResourceGroupConfig = {
-  id: "argocd",
-  displayName: "ArgoCD",
-  icon: "argoCD",
-  orderNumber: 91,
-  apiGroup: "argoproj.io",
-  resources: [
-    // { kind: "Application" },  // Commented out - using custom component
-    { kind: "AppProject", displayName: "Projects" },
-    { kind: "ApplicationSet", displayName: "ApplicationSets" },
-  ],
-};
-```
-
-Then create the Application API, Store, Routes, and UI manually for full control.
-
-#### Example: Adding Status Icons
-
-For resources with status indicators:
-
-```typescript
-renderTableContents={item => {
-  const status = item.status?.phase || "Unknown";
-  const isReady = item.status?.conditions?.some(c => 
-    c.type === "Ready" && c.status === "True"
-  );
-  
-  return [
-    <>
-      <KubeObjectStatusIcon 
-        key="icon" 
-        object={item}
-        status={isReady ? "success" : "warning"}
-      />
-      {item.getName()}
-    </>,
-    <NamespaceSelectBadge key="namespace" namespace={item.getNs() || ""} />,
-    <span key="status" className={`status-${status.toLowerCase()}`}>
-      {status}
-    </span>,
-    <KubeObjectAge key="age" object={item} />,
-  ];
-}}
-```
+**Benefits:**
+- Zero configuration - just specify the resource kind
+- Consistent with Custom Resources section
+- Automatically updates when CRD changes
+- Shows the columns that the resource maintainers think are most important
 
 ### Custom Resource Methods
 
@@ -1149,25 +930,17 @@ Examples:
 
 ## Customization
 
-### Custom UI Columns
+### Automatic Column Detection
 
-To add custom columns, define them in your resource config using the `columns` array. See the detailed example in the [Customization](#customization) section above.
+Columns are automatically detected from the CRD's `additionalPrinterColumns` specification. No configuration is needed - managed resources display the same columns as they would in the "Custom Resources" section.
 
-**Quick example:**
-```typescript
-resources: [
-  {
-    kind: "Application",
-    columns: [
-      {
-        id: "status",
-        title: "Status",
-        getValue: (item) => (item as any).status?.phase || "Unknown",
-      },
-    ],
-  },
-]
-```
+The system automatically:
+- Reads columns from the CRD definition
+- Displays them between Namespace and Age columns  
+- Makes all columns sortable
+- Updates when the CRD changes
+
+This ensures consistency and reduces configuration overhead.
 
 ### Custom Resource Methods
 
@@ -1211,32 +984,6 @@ export const argoCDResourceGroupConfig: ManagedResourceGroupConfig = {
       apiVersion: "v1alpha1",
       pluralName: "applications",
       namespaced: true,
-      columns: [
-        {
-          id: "destination",
-          title: "Destination",
-          getValue: (item) => {
-            const spec = (item as any).spec;
-            return spec?.destination?.namespace || "-";
-          },
-        },
-        {
-          id: "sync-status",
-          title: "Sync",
-          getValue: (item) => {
-            const status = (item as any).status;
-            return status?.sync?.status || "Unknown";
-          },
-        },
-        {
-          id: "health-status",
-          title: "Health",
-          getValue: (item) => {
-            const status = (item as any).status;
-            return status?.health?.status || "Unknown";
-          },
-        },
-      ],
     },
     {
       kind: "AppProject",
@@ -1255,6 +1002,8 @@ export const argoCDResourceGroupConfig: ManagedResourceGroupConfig = {
   ],
 };
 ```
+
+**Note:** Columns are automatically detected from the CRD's `additionalPrinterColumns` - no manual configuration needed!
 
 ## Implementation Details
 
@@ -1320,17 +1069,20 @@ This ensures:
 - Consistent spacing and padding
 - Same navigation behavior
 - Uniform appearance across all resources
-- Custom columns automatically integrated
+- Columns automatically detected from CRDs
 
-### Custom Columns
+### Automatic Column Detection
 
-Custom columns defined in your config are passed to `ManagedResourceList` and automatically:
-- Inserted between Namespace and Age columns
-- Made sortable using the column `id`
-- Given CSS class matching the column `id`
-- Rendered with values from `getValue` function
+Columns are automatically detected from the CRD's `additionalPrinterColumns` specification:
+- No configuration needed in your resource config
+- Columns are read directly from the installed CRD
+- Automatically sortable using the column name
+- CSS class automatically set to the column name (lowercased, spaces replaced with hyphens)
+- Values extracted using the JSONPath from the CRD definition
 
-**Column order:** Name | Namespace | [Custom Columns] | Age
+**Column order:** Name | Namespace | [CRD Printer Columns] | Age
+
+This ensures managed resources display the same columns as the "Custom Resources" section, providing a consistent user experience.
 
 ## Troubleshooting
 

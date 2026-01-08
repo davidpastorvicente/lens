@@ -5,72 +5,34 @@
 import React from "react";
 import { KubeObjectListLayout } from "../kube-object-list-layout";
 import { KubeObjectAge } from "../kube-object/age";
-import type { KubeObject } from "@k8slens/kube-object";
+import type { KubeObject, CustomResourceDefinition } from "@k8slens/kube-object";
 import { NamespaceSelectBadge } from "../namespaces/namespace-select-badge";
 import type { CustomResourceStore } from "../../../common/k8s-api/api-manager/resource.store";
-import type { ManagedResourceColumn } from "../../../common/managed-resources/managed-resource-group";
+import { formatJSONValue, safeJSONPathValue } from "@k8slens/utilities";
+import type { TableCellProps } from "@k8slens/list-layout";
 
 export interface ManagedResourceListProps {
   store: CustomResourceStore<KubeObject>;
   resourceName: string;
   displayName: string;
-  customColumns?: ManagedResourceColumn[];
+  crd?: CustomResourceDefinition;
+  isNamespaced: boolean;
+}
+
+enum columnId {
+  name = "name",
+  namespace = "namespace",
+  age = "age",
 }
 
 /**
  * Generic list component for managed resources
- * Renders a table with Name, Namespace, custom columns (if any), and Age
+ * Automatically detects columns from CRD printer columns (same as Custom Resources section)
+ * Renders a table with Name, Namespace, extra columns from CRD, and Age
  */
-export const ManagedResourceList = ({ store, resourceName, displayName, customColumns = [] }: ManagedResourceListProps) => {
-  // Build column IDs for sorting
-  const columnIds = {
-    name: "name",
-    namespace: "namespace",
-    age: "age",
-    ...Object.fromEntries(customColumns.map(col => [col.id, col.id])),
-  };
-
-  // Build sorting callbacks
-  const sortingCallbacks: Record<string, (item: KubeObject) => any> = {
-    [columnIds.name]: item => item.getName(),
-    [columnIds.namespace]: item => item.getNs(),
-    [columnIds.age]: item => -item.getCreationTimestamp(),
-  };
-
-  // Add custom column sorting
-  customColumns.forEach(col => {
-    sortingCallbacks[col.id] = (item: KubeObject) => {
-      const value = col.getValue(item);
-
-      // If value is a React element, convert to string for sorting
-      return typeof value === "string" || typeof value === "number" ? value : String(value);
-    };
-  });
-
-  // Build table headers
-  const tableHeaders = [
-    { title: "Name", className: "name", sortBy: columnIds.name, id: columnIds.name },
-    { title: "Namespace", className: "namespace", sortBy: columnIds.namespace, id: columnIds.namespace },
-    ...customColumns.map(col => ({
-      title: col.title,
-      className: col.id,
-      sortBy: col.id,
-      id: col.id,
-    })),
-    { title: "Age", className: "age", sortBy: columnIds.age, id: columnIds.age },
-  ];
-
-  // Build table contents renderer
-  const renderTableContents = (item: KubeObject) => [
-    item.getName(),
-    <NamespaceSelectBadge key="namespace" namespace={item.getNs() || ""} />,
-    ...customColumns.map((col, index) => (
-      <React.Fragment key={col.id}>
-        {col.getValue(item)}
-      </React.Fragment>
-    )),
-    <KubeObjectAge key="age" object={item} />,
-  ];
+export const ManagedResourceList = ({ store, resourceName, displayName, crd, isNamespaced }: ManagedResourceListProps) => {
+  // Get printer columns from CRD (same as Custom Resources does)
+  const extraColumns = crd?.getPrinterColumns(false) || [];
 
   return (
     <KubeObjectListLayout
@@ -78,13 +40,42 @@ export const ManagedResourceList = ({ store, resourceName, displayName, customCo
       tableId={resourceName}
       className={resourceName}
       store={store}
-      sortingCallbacks={sortingCallbacks}
+      sortingCallbacks={{
+        [columnId.name]: item => item.getName(),
+        [columnId.namespace]: item => item.getNs(),
+        [columnId.age]: item => -item.getCreationTimestamp(),
+        ...Object.fromEntries(extraColumns.map(({ name, jsonPath }) => [
+          name,
+          item => formatJSONValue(safeJSONPathValue(item, jsonPath)),
+        ])),
+      }}
       searchFilters={[
         item => item.getSearchFields(),
       ]}
       renderHeaderTitle={displayName}
-      renderTableHeader={tableHeaders}
-      renderTableContents={renderTableContents}
+      renderTableHeader={[
+        { title: "Name", className: "name", sortBy: columnId.name, id: columnId.name },
+        isNamespaced
+          ? { title: "Namespace", className: "namespace", sortBy: columnId.namespace, id: columnId.namespace }
+          : undefined,
+        ...extraColumns.map(({ name }) => ({
+          title: name,
+          className: name.toLowerCase().replace(/\s+/g, "-"),
+          sortBy: name,
+          id: name,
+        })),
+        { title: "Age", className: "age", sortBy: columnId.age, id: columnId.age },
+      ]}
+      renderTableContents={item => [
+        item.getName(),
+        isNamespaced && (
+          <NamespaceSelectBadge namespace={item.getNs() as string} />
+        ),
+        ...extraColumns.map((column): TableCellProps => ({
+          title: formatJSONValue(safeJSONPathValue(item, column.jsonPath)),
+        })),
+        <KubeObjectAge key="age" object={item} />,
+      ]}
     />
   );
 };

@@ -69,7 +69,6 @@ const setupManagedResourceGroupsInjectable = getInjectable({
                 group: group.apiGroup,
                 pluralName: resource.pluralName,
                 namespaced: resource.namespaced,
-                columns: resource.columns || [],
               };
             } else {
               // Try to find CRD for this resource
@@ -94,7 +93,6 @@ const setupManagedResourceGroupsInjectable = getInjectable({
                 group: crd.getGroup(),
                 pluralName: crd.getPluralName(),
                 namespaced: crd.isNamespaced(),
-                columns: resource.columns || [],
               };
             }
 
