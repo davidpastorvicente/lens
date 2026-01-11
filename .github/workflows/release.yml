@@ -1,0 +1,158 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v6.5.5
+
+env:
+  NODE_VERSION: '16.x'
+  NPM_VERSION: '^9.6.7'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  build-macos:
+    name: Build macOS (x64 & arm64)
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install specific npm version
+        run: npm install -g npm@${{ env.NPM_VERSION }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Build macOS apps
+        working-directory: ./open-lens
+        run: npm run build:app -- --mac --x64 --arm64
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false  # Skip code signing
+
+      - name: Generate SHA256 checksums
+        working-directory: ./open-lens/dist
+        run: |
+          for file in *.{dmg,zip}; do
+            if [ -f "$file" ]; then
+              shasum -a 256 "$file" > "$file.sha256"
+            fi
+          done
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: |
+            open-lens/dist/*.dmg
+            open-lens/dist/*.dmg.sha256
+            open-lens/dist/*-mac.zip
+            open-lens/dist/*-mac.zip.sha256
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install specific npm version
+        run: npm install -g npm@${{ env.NPM_VERSION }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Build Windows apps
+        working-directory: ./open-lens
+        run: npm run build:app -- --win --x64
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false  # Skip code signing
+
+      - name: Generate SHA256 checksums
+        working-directory: ./open-lens/dist
+        shell: pwsh
+        run: |
+          Get-ChildItem -Include *.exe, *.msi -Recurse | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)" | Out-File -FilePath "$($_.Name).sha256" -Encoding ASCII
+          }
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            open-lens/dist/*.exe
+            open-lens/dist/*.exe.sha256
+            open-lens/dist/*.msi
+            open-lens/dist/*.msi.sha256
+          if-no-files-found: error
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: OpenLens ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            artifacts/macos-artifacts/*
+            artifacts/windows-artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
