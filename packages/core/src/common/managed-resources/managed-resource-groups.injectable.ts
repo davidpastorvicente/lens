@@ -6,6 +6,7 @@ import { getInjectable, lifecycleEnum } from "@ogre-tools/injectable";
 import type { ManagedResourceGroupConfig } from "./managed-resource-group";
 import { argoCDResourceGroupConfig } from "./argocd-resource-group.config";
 import { certManagerResourceGroupConfig } from "./certmanager-resource-group.config";
+import { openShiftResourceGroupConfig } from "./openshift-resource-group.config";
 
 /**
  * Injectable that provides all managed resource group configurations
@@ -16,6 +17,7 @@ const managedResourceGroupsInjectable = getInjectable({
   instantiate: (): ManagedResourceGroupConfig[] => [
     argoCDResourceGroupConfig,
     certManagerResourceGroupConfig,
+    openShiftResourceGroupConfig,
     // Add more resource groups here:
     // vpaResourceGroupConfig,
     // kedaResourceGroupConfig,

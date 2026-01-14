@@ -24,6 +24,7 @@ import License from "./license.svg";
 import LogoLens from "./logo-lens.svg";
 import Logout from "./logout.svg";
 import Nodes from "./nodes.svg";
+import OpenShift from "./openshift.svg";
 import PushOff from "./push_off.svg";
 import PushPin from "./push_pin.svg";
 import Spinner from "./spinner.svg";
@@ -64,6 +65,7 @@ const localSvgIcons = new Map([
   ["logo-lens", LogoLens],
   ["logout", Logout],
   ["nodes", Nodes],
+  ["openShift", OpenShift],
   ["push_off", PushOff],
   ["push_pin", PushPin],
   ["spinner", Spinner],
@@ -91,6 +93,7 @@ export type NamedSvg =
   | "logo-lens"
   | "logout"
   | "nodes"
+  | "openShift"
   | "push_off"
   | "push_pin"
   | "spinner"
